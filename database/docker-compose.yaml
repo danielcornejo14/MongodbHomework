@@ -1,0 +1,10 @@
+version: '3.3'
+services:
+  mongodb:
+    container_name: mongo_homework
+    image: mongo:5.0.8
+    volumes:
+      - ./init-mongodb:/docker-entrypoint-initdb.d
+      - ./init-mongodb/data:/tmp/data
+    ports:
+      - "27017:27017"

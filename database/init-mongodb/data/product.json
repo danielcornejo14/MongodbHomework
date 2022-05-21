@@ -1,0 +1,10 @@
+[
+    {
+        "product_id": 0,
+        "name": "Cheese",
+        "category": 0,
+        "brand": "Dos pinos",
+        "description": "Dairy product made in coronado",
+        "price": 2500
+    }
+]

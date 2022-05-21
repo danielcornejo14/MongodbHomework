@@ -1,0 +1,16 @@
+[
+    {
+        "client_id": 0,
+        "name": "Daniel",
+        "phone": ["70117750"],
+        "card": ["1234567887654321"],
+        "direction": [
+            {
+                "province": "Cartago",
+                "canton": "Paraiso",
+                "district": "Paraiso",
+                "street": "2"
+            }
+        ]
+    }
+]

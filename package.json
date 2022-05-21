@@ -1,0 +1,16 @@
+{
+  "name": "tarea-8",
+  "version": "1.0.0",
+  "main": "procedures.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.1",
+    "mongodb": "^4.6.0"
+  },
+  "devDependencies": {},
+  "description": ""
+}
