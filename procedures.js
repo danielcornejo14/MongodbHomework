@@ -1,23 +1,15 @@
+const e = require("express");
 const { MongoClient } = require("mongodb");
 const connectionString = "mongodb://localhost:27017"
 const client = new MongoClient(connectionString)
 
 const dbName = "mongo_hw";
 
-async function main() {
-    
-    await insertCategory('zorrobicho')
-    await insertCategory('sumama')
-    await updateCategory(3, 'Clothes')
-    await readCategory()
-    await deleteCategory(4)
 
 
-    return 'done.';
-}
+// ##############################################CRUDS
 
-// CRUDS
-
+//---------------------------------------Category
 async function insertCategory(p_name){
     await client.connect()
     const db = client.db(dbName)
@@ -25,23 +17,30 @@ async function insertCategory(p_name){
     const category = db.collection('category')
 
     const  read_index = await category.find({}).sort({"category_id": -1}).limit(1).toArray()
-    const highestIndex = read_index[0].category_id
-    console.log("##############INDEX:"+highestIndex)
+    let highestIndex = read_index[0].category_id
 
-    const document = {
+    const newDocument = {
         category_id: highestIndex+1,
         name: p_name
     }
 
-    const insert_query = await category.insertOne(document)
+    const insert_query = await category.insertOne(newDocument)
     console.log(`A document was inserted with the _id: ${insert_query.insertedId}`)
-
-
 
     client.close()
 
 }
+async function readCategory(){
+    await client.connect()
+    const db = client.db(dbName)
+    const category = db.collection('category')
 
+    const read_query = await category.find({}).toArray()
+    console.log(read_query)
+
+    client.close()
+
+}
 async function updateCategory(p_categoryId, p_name){
     await client.connect()
     const db = client.db(dbName)
@@ -63,37 +62,410 @@ async function updateCategory(p_categoryId, p_name){
 
     client.close()
 }
-
-async function readCategory(){
-    await client.connect()
-    const db = client.db(dbName)
-    const category = db.collection('category')
-
-    const read_query = await category.find({}).toArray()
-    console.log(read_query)
-
-    client.close()
-
-}
-
 async function deleteCategory(p_categoryId){
-    await client.connect()
-    const db = client.db(dbName)
+    await client.connect();
+    const db = client.db(dbName);
     
-    const category = db.collection('category')
+    const category = db.collection('category');
 
     const deleteDocument = {
         category_id: p_categoryId
-    }
+    };
 
-    const delete_query = await category.deleteOne(deleteDocument)
-    console.log(`${delete_query.deletedCount} document has been removed`)
+    const delete_query = await category.deleteOne(deleteDocument);
+    console.log(`${delete_query.deletedCount} document has been removed`);
 
-    client.close()
+    client.close();
 
 }
+//---------------------------------------Customer
+
+async function insertCustomer(p_name, p_phone, p_card, p_province, p_canton, p_district, p_street){
+    await client.connect()
+    const db = client.db(dbName)
+    
+    const customer = db.collection('customer')
+
+    const  read_index = await customer.find({}).sort({"customer_id": -1}).limit(1).toArray()
+    let highestIndex = read_index[0].customer_id
+
+    const newDocument = {
+        customer_id: highestIndex+1,
+        name: p_name,
+        phone: p_phone,
+        card: p_card,
+        direction: [
+            {
+                province: p_province,
+                canton: p_canton,
+                district: p_district,
+                street: p_street
+            }
+        ]
+    }
+
+    console.log(newDocument)
+
+    const insert_query = await customer.insertOne(newDocument)
+    console.log(`A document was inserted with the _id: ${insert_query.insertedId}`)
+
+    client.close();
+
+};
+async function readCustomer(){
+    await client.connect();
+    const db = client.db(dbName)
+
+    const customer = db.collection('customer')
+
+    const read_query = await customer.find({}).toArray()
+    console.log(read_query)
+
+    client.close()
+};
+async function updateCustomer(p_customerId, p_name, p_phoneIndx, p_phone, p_cardIndx, p_card, p_dirIndx, p_province, p_canton, p_district, p_street){
+    await client.connect()
+    const db = client.db(dbName)
+    
+    const customer = db.collection('customer')
+
+    const filter = {
+        customer_id: p_customerId 
+    }
+
+    const updateDocument = {
+        $set:{
+            name: p_name,
+            [`phone.${p_phoneIndx}`]: p_phone,
+            [`card.${p_cardIndx}`]: p_card,
+            [`direction.${p_dirIndx}.province`]: p_province,
+            [`direction.${p_dirIndx}.canton`]: p_canton,
+            [`direction.${p_dirIndx}.district`]: p_district,
+            [`direction.${p_dirIndx}.street`]: p_street
+        }
+    }
+
+    const update_query = await customer.updateOne(filter, updateDocument)
+    console.log(`A document was updated with the _id: ${update_query.upsertedId}`)
+
+    client.close()
+};
+async function deleteCustomer(p_customerId){
+    await client.connect()
+    const db = client.db(dbName)
+    
+    const customer = db.collection('customer')
+
+    const deleteDocument = {
+        customer_id: p_customerId
+    };
+
+    const delete_query = await customer.deleteOne(deleteDocument);
+    console.log(`${delete_query.deletedCount} document has been removed`);
+
+    client.close();
+};
+
+//---------------------------------------Product
+
+async function insertProduct(p_name, p_category, p_brand, p_description, p_price){
+    await client.connect()
+    const db = client.db(dbName)
+
+    const product = db.collection('product')
+    const category = db.collection('category')
+
+    const  readIndex = await product.find({}).sort({"product_id": -1}).limit(1).toArray()
+    const highestIndex = readIndex[0].product_id
+
+    
+    const verifyCategoryQuery = await category.find({category_id: p_category}).toArray()
+    let categoryVerification = verifyCategoryQuery.length > 0;
+
+    if(categoryVerification){
+        const newDocument = {
+            product_id: highestIndex+1,
+            name: p_name,
+            category: p_category,
+            brand: p_brand,
+            description: p_description,
+            price: p_price
+        }
+
+        const insert_query = await product.insertOne(newDocument)
+        console.log(`A document was inserted with the _id: ${insert_query.insertedId}`)
+
+        client.close()
+        return
+        
+    }
+    else{
+        console.log("please verify that the category exists")
+        client.close();
+        return
+    }
+}; 
+async function readProduct(){
+    await client.connect()
+    const db = client.db(dbName)
+    
+    const product = db.collection('product')
+
+    const read_query = await product.find({}).toArray()
+    console.log(read_query)
+
+    client.close();
+    return
+};
+async function updateProduct(p_productId, p_name, p_category, p_brand, p_description, p_price){
+    await client.connect()
+    const db = client.db(dbName)
+    
+    const product = db.collection('product')
+    const category = db.collection('category')
+
+    const filter = {
+        product_id: p_productId
+    }
+
+    const verifyCategoryQuery = await category.find({category_id: p_category}).toArray()
+    const categoryVerification = verifyCategoryQuery.length > 0
+
+
+    if(categoryVerification){
+        const updateDocument = {
+            $set:{
+                name: p_name,
+                category: p_category,
+                brand: p_brand,
+                description: p_description,
+                price: p_price
+            }
+        }
+
+        const update_query = await product.updateOne(filter, updateDocument)
+        console.log(`A document was updated with the _id: ${update_query.upsertedId}`)
+
+        client.close();
+        return
+
+    }
+    
+    else{
+        console.log("please verify that the category exists")
+
+        client.close();
+        return
+    }
+
+
+
+};
+async function deleteProduct(p_productId){
+    await client.connect()
+    const db = client.db(dbName)
+    
+    const product = db.collection('product')
+
+    const deleteDocument = {
+        product_id: p_productId
+    };
+
+    const delete_query = await product.deleteOne(deleteDocument);
+    console.log(`${delete_query.deletedCount} document has been removed`);
+
+    client.close();
+    return
+};
+
+//---------------------------------------Sale
+
+async function insertSale(p_customerId, p_productId){
+    await client.connect()
+    const db = client.db(dbName)
+    
+    const sale = db.collection('sale')
+    const customer = db.collection('customer')
+    const product = db.collection('product')
+
+    const  readIndex = await sale.find({}).sort({"sale_id": -1}).limit(1).toArray()
+    let highestIndex = readIndex[0].sale_id
+
+    const verifyCustomerQuery = await customer.find({customer_id: p_customerId}).toArray()
+    const customerVerification = verifyCustomerQuery.length > 0
+    
+    let productVerification = true
+    let saleTotal = 0
+
+    for( i = 0; i < p_productId.length; i++){
+        const verifyProductQuery = await product.find({product_id: p_productId[i]}).toArray()
+        let itemPrice = verifyProductQuery[0].price
+        if(verifyProductQuery.length = 0){
+            productVerification = false
+            break;
+        }
+        else{
+            saleTotal += itemPrice
+        }
+    }
+    if(customerVerification && productVerification){
+        const newDocument = {
+            sale_id: highestIndex+1,
+            customer_id: p_customerId,
+            product_id: p_productId,
+            total: saleTotal
+        }
+        
+        const insertQuery = await sale.insertOne(newDocument)
+        console.log(`A document was inserted with the _id: ${insertQuery.insertedId}`)
+
+        client.close();
+        return
+    }
+    else if (customerVerification && !productVerification){
+        console.log('please check if all products are valid')
+        client.close();
+        return
+    }
+    else if (!customerVerification && productVerification){
+        console.log('please check that the customer id is valid')
+        client.close();
+        return
+    }
+    else{
+        console.log('please check the product list and the customer id')
+        client.close();
+        return
+    }
+
+};
+async function readSale(){
+    await client.connect()
+    const db = client.db(dbName)
+    
+    const sale = db.collection('sale')
+
+    const read_query = await sale.find({}).toArray()
+    console.log(read_query)
+
+    client.close();
+};
+async function updateSale(p_saleId, p_customerId, p_productId){
+    await client.connect()
+    const db = client.db(dbName)
+    
+    const sale = db.collection('sale')
+    const customer = db.collection('customer')
+    const product = db.collection('product')
+
+    const  readIndex = await sale.find({}).sort({"sale_id": -1}).limit(1).toArray()
+    const highestIndex = readIndex[0].sale_id
+
+    const verifyCustomerQuery = await customer.find({customer_id: p_customerId}).toArray()
+    
+    const customerVerification = verifyCustomerQuery.length > 0
+    let productVerification = true
+
+    let saleTotal = 0
+
+    for( i = 0; i < p_productId.length; i++){
+        const verifyProductQuery = await product.find({product_id: p_productId[i]}).toArray()
+        let itemPrice = verifyProductQuery[0].price
+        if(verifyProductQuery.length = 0){
+            productVerification = false
+            break;
+        }
+        else{
+            saleTotal += itemPrice
+        }
+    }
+    
+    if(customerVerification && productVerification){
+        const filter = {
+            sale_id: p_saleId
+        }
+
+        const updateDocument = {
+            $set: {  
+                sale_id: highestIndex+1,
+                customer_id: p_customerId,
+                product_id: p_productId,
+                total: saleTotal
+            }
+        }
+        
+        const updateQuery = await sale.updateOne(filter, updateDocument)
+        console.log(`A document was updated with the _id: ${updateQuery.upsertedId}`)
+
+        client.close();
+        return
+    }
+    else if (customerVerification && !productVerification){
+        console.log('please check if all products are valid')
+        client.close();
+        return
+    }
+    else if (!customerVerification && productVerification){
+        console.log('please check that the customer id is valid')
+        client.close();
+        return
+    }
+    else{
+        console.log('please check the product list and the customer id')
+        client.close();
+        return
+    }
+};
+async function deleteSale(p_saleId){
+    await client.connect()
+    const db = client.db(dbName)
+    
+    const sale = db.collection('sale')
+
+    const deleteDocument = {
+        sale_id: p_saleId
+    };
+
+    const delete_query = await sale.deleteOne(deleteDocument);
+    console.log(`${delete_query.deletedCount} document has been removed`);
+
+    client.close();
+};
+
+// ########################################Procedures
 
 
 
 
+// #####################################Main Program
+
+async function main() {
+    
+    await insertCategory('fakecategory')
+    await insertCategory('fakecategory2')
+    await readCategory()
+    await updateCategory(2, 'Shoes')
+    await deleteCategory(3)
+
+    await insertCustomer('mauricio',['12344321'], ['8765432112345678'], 'alajuela', 'alajuela', 'la agonia', "23")
+    await insertCustomer('diego',['12344321'], ['8765432112345678'], 'alajuela', 'alajuela', 'la agonia', "23")
+    await readCustomer()
+    await updateCustomer(2, 'alejandro',0,'12344322', 0,'8765432112345677', 0,'alajuela', 'alajuela', 'la agonia', "23")
+    await deleteCustomer(1)
+
+    await insertProduct('jordans',2,'nike','nike shoes',70000)
+    await insertProduct('yeezy',2,'yeezy','yeezy shoes',80000)
+    await readProduct()
+    await updateProduct(1, 'new balance',2,'new balance','new balance shoes',50000)
+    await deleteProduct(2)
+
+    await insertSale(0,[0,0,0])
+    await insertSale(0,[0,0])
+    await readSale()
+    await updateSale(1,0,[0,0,0,0])
+    await deleteSale(1)
+
+
+    return 'done.';
+}
 main()

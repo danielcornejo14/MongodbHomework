@@ -1,7 +1,7 @@
 [
     {
         "sale_id": 0,
-        "client_id": 0,
+        "customer_id": 0,
         "product_id": [0],
         "total": 2500
     }

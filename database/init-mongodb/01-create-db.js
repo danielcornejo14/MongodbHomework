@@ -61,13 +61,13 @@ db.createCollection("product", {
 })
 db.product.createIndex({product_id: 1}, {unique: true})
 
-db.createCollection("client", {
+db.createCollection("customer", {
     validator: {
         $jsonSchema: {
             bsonType: "object",
-            required: ["client_id", "name", "phone", "card", "direction"],
+            required: ["customer_id", "name", "phone", "card", "direction"],
             properties: {
-                client_id:{
+                customer_id:{
                     bsonType: "int",
                     minimum: 0,
                     description: "must be an int greater than 0 and is required"
@@ -123,20 +123,20 @@ db.createCollection("client", {
         }
     }
 })
-db.client.createIndex({client_id: 1}, {unique: true})
+db.customer.createIndex({customer_id: 1}, {unique: true})
 
 db.createCollection("sale", {
     validator: {
         $jsonSchema:{
             bsonType: "object",
-            required: ["sale_id", "client_id", "product_id", "total"],
+            required: ["sale_id", "customer_id", "product_id", "total"],
             properties: {
                 sale_id:{
                     bsonType: "int",
                     minimum: 0,
                     description: "must be an int greater than 0 and is required"
                 },
-                client_id:{
+                customer_id:{
                     bsonType: "int",
                     minimum: 0,
                     description: "must be an int greater than 0 and is required"
