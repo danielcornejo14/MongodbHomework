@@ -5,6 +5,16 @@
         "category": 0,
         "brand": "Dos pinos",
         "description": "Dairy product made in coronado",
+        "inventory": 20,
         "price": 2500
+    },
+    {
+        "product_id": 1,
+        "name": "Milk",
+        "category": 0,
+        "brand": "Coronado",
+        "description": "Dairy product made in coronado",
+        "inventory": 0,
+        "price": 1500
     }
 ]

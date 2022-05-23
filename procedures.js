@@ -168,7 +168,7 @@ async function deleteCustomer(p_customerId){
 
 //---------------------------------------Product
 
-async function insertProduct(p_name, p_category, p_brand, p_description, p_price){
+async function insertProduct(p_name, p_category, p_brand, p_description, p_inventory, p_price){
     await client.connect()
     const db = client.db(dbName)
 
@@ -189,6 +189,7 @@ async function insertProduct(p_name, p_category, p_brand, p_description, p_price
             category: p_category,
             brand: p_brand,
             description: p_description,
+            inventory: p_inventory,
             price: p_price
         }
 
@@ -217,7 +218,7 @@ async function readProduct(){
     client.close();
     return
 };
-async function updateProduct(p_productId, p_name, p_category, p_brand, p_description, p_price){
+async function updateProduct(p_productId, p_name, p_category, p_brand, p_description, p_inventory, p_price){
     await client.connect()
     const db = client.db(dbName)
     
@@ -239,6 +240,7 @@ async function updateProduct(p_productId, p_name, p_category, p_brand, p_descrip
                 category: p_category,
                 brand: p_brand,
                 description: p_description,
+                inventory: p_inventory,
                 price: p_price
             }
         }
@@ -297,7 +299,7 @@ async function insertSale(p_customerId, p_productId){
     let productVerification = true
     let saleTotal = 0
 
-    for( i = 0; i < p_productId.length; i++){
+    for(let i = 0; i < p_productId.length; i++){
         const verifyProductQuery = await product.find({product_id: p_productId[i]}).toArray()
         let itemPrice = verifyProductQuery[0].price
         if(verifyProductQuery.length = 0){
@@ -309,6 +311,21 @@ async function insertSale(p_customerId, p_productId){
         }
     }
     if(customerVerification && productVerification){
+
+        for(let i = 0; i < p_productId.length; i++){
+            const updateFilter = {
+                product_id: p_productId[i]
+            }
+
+            const updateDocument = {
+                $inc:{
+                    inventory: -1
+                }
+            }
+            const updateInventoryQuery = await product.updateOne(updateFilter, updateDocument)
+            
+        }
+
         const newDocument = {
             sale_id: highestIndex+1,
             customer_id: p_customerId,
@@ -434,37 +451,95 @@ async function deleteSale(p_saleId){
 
 // ########################################Procedures
 
+async function queryInventory(){
+    await client.connect()
+    const db = client.db(dbName)
 
+    const product = db.collection('product')
+
+    const inventoryQuery = await product.find({inventory: {
+        $gt: 0
+    }}).toArray()
+
+    console.log(inventoryQuery)
+    client.close();
+}
+async function queryCustomerSales(){
+    await client.connect();
+
+    await client.connect()
+    const db = client.db(dbName)
+
+    const sale = db.collection('sale')
+    const customer = db.collection('customer')
+
+    const customerSaleQuery = await sale.aggregate([
+        {
+            $lookup:{
+                from: "customer",
+                localField: "customer_id",
+                foreignField: "customer_id",
+                as: "customer_info"
+            }
+        },
+        {
+            $unwind: "$customer_info"
+        },
+        {
+            $project: {
+                "customer_info.customer_id":1,
+                "customer_info.name": 1,
+                "customer_info.phone":1
+            }
+        },
+        {
+            $unwind: "$customer_info.phone"
+        },
+        {
+            $group: {
+                _id: "$customer_info.customer_id",
+                totalSales: {$count: {}}
+            }
+        },
+
+    ]).toArray()
+
+    console.log(customerSaleQuery)
+    client.close();
+}
 
 
 // #####################################Main Program
 
 async function main() {
     
-    await insertCategory('fakecategory')
-    await insertCategory('fakecategory2')
-    await readCategory()
-    await updateCategory(2, 'Shoes')
-    await deleteCategory(3)
+    // await insertCategory('fakecategory')
+    // await insertCategory('fakecategory2')
+    // await readCategory()
+    // await updateCategory(2, 'Shoes')
+    // await deleteCategory(3)
 
-    await insertCustomer('mauricio',['12344321'], ['8765432112345678'], 'alajuela', 'alajuela', 'la agonia', "23")
-    await insertCustomer('diego',['12344321'], ['8765432112345678'], 'alajuela', 'alajuela', 'la agonia', "23")
-    await readCustomer()
-    await updateCustomer(2, 'alejandro',0,'12344322', 0,'8765432112345677', 0,'alajuela', 'alajuela', 'la agonia', "23")
-    await deleteCustomer(1)
+    // await insertCustomer('mauricio',['12344321'], ['8765432112345678'], 'alajuela', 'alajuela', 'la agonia', "23")
+    // await insertCustomer('diego',['12344321'], ['8765432112345678'], 'alajuela', 'alajuela', 'la agonia', "23")
+    // await readCustomer()
+    // await updateCustomer(2, 'alejandro',0,'12344322', 0,'8765432112345677', 0,'alajuela', 'alajuela', 'la agonia', "23")
+    // await deleteCustomer(1)
 
-    await insertProduct('jordans',2,'nike','nike shoes',70000)
-    await insertProduct('yeezy',2,'yeezy','yeezy shoes',80000)
-    await readProduct()
-    await updateProduct(1, 'new balance',2,'new balance','new balance shoes',50000)
-    await deleteProduct(2)
+    // await insertProduct('jordans',2,'nike','nike shoes', 20, 70000)
+    // await insertProduct('yeezy',2,'yeezy','yeezy shoes', 3, 80000)
+    // await readProduct()
+    // await updateProduct(2, 'new balance',2,'new balance','new balance shoes', 50, 50000)
+    // await deleteProduct(3)
 
-    await insertSale(0,[0,0,0])
-    await insertSale(0,[0,0])
-    await readSale()
-    await updateSale(1,0,[0,0,0,0])
-    await deleteSale(1)
+    // await insertSale(0,[0,0,0])
+    // await insertSale(0,[0,0])
+    // await readSale()
+    // await updateSale(1,0,[0,0,0,0])
+    // await deleteSale(1)
 
+    await queryInventory()
+    await queryCustomerSales()
+    
 
     return 'done.';
 }

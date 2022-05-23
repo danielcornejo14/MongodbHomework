@@ -26,7 +26,7 @@ db.createCollection("product", {
     validator: {
         $jsonSchema: {
             bsonType: "object",
-            required: ["product_id", "name", "category", "brand", "description", "price"],
+            required: ["product_id", "name", "category", "brand", "description", "inventory", "price"],
             properties: {
                 product_id: {
                     bsonType: "int",
@@ -49,6 +49,11 @@ db.createCollection("product", {
                 description:{
                     bsonType: "string",
                     description: "must be a string and is required"
+                },
+                inventory:{
+                    bsonType: "int",
+                    minimum: 0,
+                    description: "must be an int greater than 0 and is required"
                 },
                 price: {
                     bsonType: "int",
